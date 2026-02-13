@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC 做空网格策略模拟器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .config-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .config-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .results-section {
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .price-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .price-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+        }
+        .price-card .price {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .price-card .price-label {
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        .grid-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .result-card h4 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .result-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .result-card .sub-value {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .trades-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .trades-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .trades-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .trades-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .trades-table tr:hover {
+            background: #f8f9fa;
+        }
+        .trades-table .positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .trades-table .negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #667eea;
+            display: none;
+        }
+        .error {
+            background: #fee2e2;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: none;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 6px 6px 0;
+            cursor: pointer;
+            color: #666;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .api-config {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .api-config h4 {
+            color: #fff;
+            margin-top: 0;
+        }
+        .api-config p {
+            color: #ffe;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BTC 做空网格策略模拟器</h1>
+
+        <div class="config-section">
+            <h2>配置参数</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>投资总额 (USDT)</label>
+                    <input type="number" id="totalUsdt" value="1000" min="100" step="100">
+                </div>
+                <div class="form-group">
+                    <label>杠杆倍数</label>
+                    <select id="leverage">
+                        <option value="1">1x</option>
+                        <option value="2">2x</option>
+                        <option value="3">3x</option>
+                        <option value="5">5x</option>
+                        <option value="10" selected>10x</option>
+                        <option value="20">20x</option>
+                        <option value="50">50x</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>模拟时间范围</label>
+                    <select id="timeRange">
+                        <option value="1">最近 1 小时</option>
+                        <option value="8">最近 8 小时</option>
+                        <option value="24" selected>最近 24 小时</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>布林带周期</label>
+                    <input type="number" id="bollPeriod" value="20" min="5" max="50">
+                </div>
+                <div class="form-group">
+                    <label>布林带倍数 (K)</label>
+                    <input type="number" id="bollK" value="2" min="0.5" max="4" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>网格线数量</label>
+                    <input type="number" id="gridCount" value="4" min="2" max="10">
+                </div>
+                <div class="form-group">
+                    <label>交易对 ID</label>
+                    <input type="text" id="instId" value="BTC-USDT-SWAP">
+                </div>
+                <div class="form-group">
+                    <label>K线周期</label>
+                    <select id="candlePeriod">
+                        <option value="1m" selected>1分钟</option>
+                        <option value="5m">5分钟</option>
+                        <option value="15m">15分钟</option>
+                        <option value="1H">1小时</option>
+                        <option value="4H">4小时</option>
+                    </select>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="fetchData()">获取行情数据</button>
+                <button class="btn-secondary" onclick="simulate()">运行模拟</button>
+                <button class="btn-danger" onclick="resetAll()">重置</button>
+            </div>
+        </div>
+
+        <div class="api-config" id="apiConfig">
+            <h4>API 配置说明</h4>
+            <p>由于浏览器的 CORS 限制，此工具无法直接从浏览器调用 OKX API。</p>
+            <p>请提供实时价格数据，或使用以下方式：</p>
+            <p>1. 在浏览器控制台运行 Python 脚本获取数据</p>
+            <p>2. 或使用代理服务器转发请求</p>
+            <p><strong>快速演示：</strong>点击下方"使用演示数据"按钮，使用预设的模拟数据进行演示</p>
+            <button class="btn-primary" onclick="useDemoData()">使用演示数据</button>
+        </div>
+
+        <div class="loading" id="loading">
+            正在获取数据...
+        </div>
+
+        <div class="error" id="error">
+            <span id="errorMsg"></span>
+        </div>
+
+        <div class="price-card" id="priceCard" style="display: none;">
+            <h3>BTC-USDT-SWAP</h3>
+            <div class="price-label">实时价格</div>
+            <div class="price" id="currentPrice">--</div>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="price-card">
+                <h3>策略参数</h3>
+                <div class="price-label">首次成交价 (BOLL)</div>
+                <div class="price" id="bollPrice">--</div>
+                <div style="margin-top: 10px; font-size: 14px;">
+                    <span id="lbPrice" style="opacity: 0.7;">LB: --</span><br>
+                    <span id="ubPrice" style="opacity: 0.7;">UB: --</span>
+                </div>
+            </div>
+
+            <div class="grid-results">
+                <div class="result-card">
+                    <h4>交易次数</h4>
+                    <div class="value" id="sellCount">--</div>
+                    <div class="sub-value">卖出开仓</div>
+                    <div class="value" id="buyCount">--</div>
+                    <div class="sub-value">买入平仓</div>
+                </div>
+                <div class="result-card">
+                    <h4>已实现利润</h4>
+                    <div class="value" id="realizedPnl">--</div>
+                    <div class="sub-value">USDT</div>
+                </div>
+                <div class="result-card">
+                    <h4>总利润</h4>
+                    <div class="value" id="totalPnl">--</div>
+                    <div class="sub-value">USDT</div>
+                </div>
+                <div class="result-card">
+                    <h4>利润率</h4>
+                    <div class="value" id="profitRate">--</div>
+                    <div class="sub-value">%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="trades-section" id="tradesSection" style="display: none;">
+            <h3>交易记录</h3>
+            <table class="trades-table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>操作</th>
+                        <th>价格</th>
+                        <th>数量 (BTC)</th>
+                        <th>盈亏 (USDT)</th>
+                    </tr>
+                </thead>
+                <tbody id="tradesBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let candles = [];
+        let bollBands = [];
+        let trades = [];
+        let currentPrice = 0;
+        let demoData = null;
+
+        // 演示数据 - 用于展示功能
+        const DEMO_DATA = {
+            candles: [
+                { time: '2026-02-12 17:00', open: 67004.6, high: 67049.6, low: 66714.57, close: 66714.57, volume: 184611.8 },
+                { time: '2026-02-12 17:15', open: 67049.6, high: 67626.05, low: 66792.98, close: 67049.6, volume: 235117.22 },
+                { time: '2026-02-12 17:30', open: 67337.5, high: 67661.07, low: 66872.32, close: 67342.3, volume: 496599.88 },
+                { time: '2026-02-12 17:45', open: 67342.3, high: 67663.55, low: 66878.77, close: 67342.3, volume: 226529.37 },
+                { time: '2026-02-12 18:00', open: 66840.2, high: 67662.93, low: 66877.07, close: 66840.2, volume: 1638618.84 },
+                { time: '2026-02-12 18:15', open: 66925.8, high: 67643.42, low: 66758.43, close: 66925.8, volume: 773441.71 },
+                { time: '2026-02-12 18:30', open: 67286.9, high: 67645.43, low: 66767.13, close: 67286.9, volume: 395126.22 },
+                { time: '2026-02-12 18:45', open: 67500, high: 67675.58, low: 66807.76, close: 67606.3, volume: 1127074.27 },
+                { time: '2026-02-12 19:00', open: 67606.3, high: 67699.79, low: 67527.95, high: 67688.40, close: 67606.3, volume: 598940.46 },
+                { time: '2026-02-12 19:15', open: 67685.2, high: 67688.40, low: 67565.77, high: 67673.60, close: 67685.2, volume: 846800.72 },
+                { time: '2026-02-12 19:30', open: 67292.5, high: 67665.91, low: 67521.76, high: 67659.13, close: 67292.5, volume: 2048563.27 },
+                { time: '2026-02-12 19:45', open: 67985.2, high: 67688.40, low: 67623.45, high: 67673.41, close: 67985.2, volume: 527484.89 },
+                { time: '2026-02-12 20:00', open: 67666.1, high: 67699.79, low: 66303.09, high: 67752.80, close: 67666.1, volume: 5797672.01 },
+                { time: '2026-02-12 20:15', open: 67685.2, high: 67688.40, low: 67804.82, high: 67714.32, close: 67685.2, volume: 606591.32 },
+                { time: '2026-02-12 20:30', open: 67292.5, high: 67665.91, low: 67214.01, high: 67756.08, close: 67292.5, volume: 3629035.90 },
+                { time: '2026-02-12 20:45', open: 67984.3, high: 68673.41, low: 67623.45, high: 68573.60, close: 67984.3, volume: 3390907.21 },
+                { time: '2026-02-12 21:00', open: 68000, high: 68752.80, low: 67890, high: 68574.01, close: 67606.3, volume: 3629035.90 },
+                { time: '2026-02-12 21:15', open: 67685.2, high: 68600.38, low: 67685.20, high: 68684.59, close: 68020.6, volume: 859916.56 },
+                { time: '2026-02-12 21:30', open: 68020.6, high: 68684.59, low: 67999.95, high: 68600.38, close: 68020.6, volume: 71866.61 },
+                { time: '2026-02-12 21:45', open: 68036, high: 68673.41, low: 68000, high: 67752.80, close: 68036, volume: 527484.89 },
+                { time: '2026-02-12 22:00', open: 67689.7, high: 68344.39, low: 66173.92, high: 68398.14, close: 67689.7, volume: 1588010.80 },
+                { time: '2026-02-12 22:15', open: 67750, high: 68344.39, low: 68000, high: 68452.45, close: 67689.7, volume: 628074.18 },
+                { time: '2026-02-12 22:30', open: 67872.7, high: 68523.72, low: 68198.14, close: 67872.7, volume: 3629035.90 },
+                { time: '2026-02-12 22:45', open: 67984.3, high: 68673.41, low: 67800, high: 68565.77, close: 67872.7, volume: 307191.09 },
+                { time: '2026-02-12 23:00', open: 66450, high: 68056.53, low: 65182.49, high: 68198.14, close: 66450, volume: 1897053.75 },
+                { time: '2026-02-12 23:15', open: 66965.9, high: 68068.28, low: 66509.10, high: 68127.15, close: 66529.3, volume: 1255799.27 },
+                { time: '2026-02-12 23:30', open: 66823.5, high: 68029.37, low: 66548.30, high: 68684.59, close: 66657.10, volume: 2399906.87 },
+                { time: '2026-02-12 23:45', open: 67018.5, high: 68036, high: 68020.60, close: 66485.7, volume: 278741.11 },
+                { time: '2026-02-12 23:45', open: 68020.6, high: 68573.60, close: 67890, high: 68543.40, close: 67606.3, volume: 3429201.74 },
+                { time: '2026-02-13 00:00', open: 67378.3, high: 68036, high: 68573.99, close: 67483.1, volume: 846800.72 },
+                { time: '2026-02-13 00:15', open: 67235.5, high: 68574.01, low: 66521.76, high: 68276.15, close: 67235.5, volume: 938649.98 },
+                { time: '2026-02-13 00:30', open: 66443.2, high: 67748.24, low: 65417.28, high: 68276.15, close: 66443.2, volume: 268014.41 },
+                { time: '2026-02-13 00:45', open: 66126, high: 67756.08, low: 65246.58, high: 68276.15, close: 66126, volume: 938649.98 },
+                { time: '2026-02-13 01:00', open: 66548.3, high: 67625.24, low: 65861.61, high: 67748.24, close: 66548.3, volume: 9538649.98 },
+                { time: '2026-02-13 01:15', open: 66826.7, high: 67756.08, low: 66000.71, high: 68276.15, close: 66826.7, volume: 846800.72 },
+                { time: '2026-02-13 01:30', open: 66872.4, high: 67725.16, low: 67004.82, high: 68528.41, close: 66872.4, volume: 107551.23 },
+                { time: '2026-02-13 01:45', open: 66364, high: 67610.16, low: 66000.71, high: 68610.16, close: 66364, volume: 2307641.09 },
+                { time: '2026-02-13 02:00', open: 65360.4, high: 68056.53, low: 65182.49, high: 68198.14, close: 65360.4, volume: 1897053.75 },
+                { time: '2026-02-13 02:15', open: 65637.8, high: 67657.18, low: 65417.28, high: 68494.41, close: 65637.8, volume: 268014.41 },
+                { time: '2026-02-13 02:30', open: 65387.1, high: 67756.08, low: 65417.28, high: 68452.45, close: 65387.1, volume: 3443439.89 },
+                { time: '2026-02-13 02:45', open: 65828.6, high: 67748.24, low: 65617.23, high: 68099.95, close: 65828.6, volume: 1678970.45 },
+                { time: '2026-02-13 03:00', open: 65828.6, high: 67948.92, low: 65430, high: 68020.60, close: 67606.3, volume: 3629035.90 },
+                { time: '2026-02-13 03:15', open: 66054.1, high: 67610.16, low: 66000.71, high: 68610.16, close: 66054.1, volume: 681021.62 },
+                { time: '2026-02-13 03:30', open: 66173.7, high: 67844.52, low: 66000.71, high: 68684.59, close: 66173.7, volume: 107551.23 },
+                { time: '2026-02-13 03:45', open: 67018.5, high: 67643.42, low: 67049.60, high: 68115.65, close: 67018.5, volume: 3028129.07 },
+                { time: '2026-02-13 04:00', open: 66687, high: 68498.74, low: 68122.20, high: 67689.70, close: 66687, volume: 504828.57 },
+                { time: '2026-02-13 04:15', open: 67483.1, high: 68543.40, low: 67814.16, high: 68494.82, close: 67483.1, volume: 2767175.90 },
+                { time: '2026-02-13 04:30', open: 67286.9, high: 68029.37, low: 67800, high: 68099.95, close: 67286.9, volume: 3423189.38 },
+                { time: '2026-02-13 04:45', open: 67984.3, high: 68673.41, low: 67800, high: 68565.77, close: 67984.3, volume: 2307641.09 },
+                { time: '2026-02-13 05:00', open: 67606.3, high: 68344.39, low: 66173.92, high: 67752.82, close: 67606.3, volume: 2775121.80 },
+                { time: '2026-02-13 05:15', open: 67080, high: 68543.40, low: 67890, high: 68574.01, close: 67080, volume: 2829130.59 },
+                { time: '2026-02-13 05:30', open: 67292.5, high: 68344.39, low: 67337.50, high: 68494.82, close: 67292.5, volume: 2307641.09 },
+                { time: '2026-02-13 05:45', open: 67685.2, high: 68673.41, low: 67800, high: 68494.82, close: 67685.2, volume: 307191.09 },
+                { time: '2026-02-13 06:00', open: 67483.1, high: 68543.40, low: 68494.82, close: 67483.1, volume: 846800.72 },
+                { time: '2026-02-13 06:15', open: 67685.2, high: 68573.99, low: 68036, high: 68600.38, close: 67685.2, volume: 3629035.90 },
+                { time: '2026-02-13 06:30', open: 66823.5, high: 68494.82, low: 67800, high: 68600.38, close: 66823.5, volume: 71866.61 },
+                { time: '2026-02-13 06:45', open: 67500, high: 68029.37, low: 67565.77, high: 68099.95, close: 67500, volume: 3390907.21 },
+                { time: '2026-02-13 07:00', open: 67689.7, high: 68448.87, low: 67483.10, high: 68449.70, close: 67689.7, volume: 3629035.90 },
+                { time: '2026-02-13 07:15', open: 67685.2, high: 68600.38, low: 68565.77, close: 67685.2, volume: 3629035.90 },
+                { time: '2026-02-13 07:30', open: 66872.4, high: 67856.08, low: 66521.76, high: 68276.15, close: 66872.4, volume: 504828.57 },
+                { time: '2026-02-13 07:45', open: 67984.3, high: 68073.60, low: 68000, high: 68543.40, close: 67984.3, volume: 3629035.90 },
+                { time: '2026-02-13 08:00', open: 68030.4, high: 68449.83, low: 67948.92, close: 68030.4, volume: 5797672.01 },
+                { time: '2026-02-13 08:15', open: 68020.6, high: 68527.15, low: 67948.92, close: 68020.6, volume: 1356908.27 },
+                { time: '2026-02-13 08:30', open: 67292.5, high: 68029.37, low: 67800, high: 68684.59, close: 67292.5, volume: 2307641.09 },
+                { time: '2026-02-13 08:45', open: 68036, high: 68673.41, low: 67948.92, close: 68036, volume: 3443439.89 },
+                { time: '2026-02-13 09:00', open: 68030.4, high: 68274.01, low: 66485.7, high: 68452.45, close: 68030.4, volume: 204023.35 },
+                { time: '2026-02-13 09:15', open: 68020.6, high: 68543.40, low: 67948.92, close: 68020.6, volume: 1356908.27 },
+                { time: '2026-02-13 09:30', open: 67292.5, high: 68344.39, low: 67800, high: 68684.59, close: 67292.5, volume: 2307641.09 },
+                { time: '2026-02-13 09:45', open: 67984.3, high: 68673.41, low: 67800, high: 68565.77, close: 67984.3, volume: 2307641.09 },
+                { time: '2026-02-13 10:00', open: 67689.7, high: 68543.40, low: 68494.82, close: 67689.7, volume: 3629035.90 },
+                { time: '2026-02-13 10:15', open: 67685.2, high: 68600.38, low: 68565.77, close: 67685.2, volume: 3629035.90 },
+                { time: '2026-02-13 10:30', open: 66823.5, high: 68494.82, low: 67800, high: 68684.59, close: 66823.5, volume: 71866.61 },
+                { time: '2026-02-13 10:45', open: 67606.3, high: 68099.95, low: 67985.00, high: 68036, close: 67606.3, volume: 3310427.81 },
+                { time: '2026-02-13 11:00', open: 66687, high: 68344.39, low: 67214.01, high: 68494.82, close: 66687, volume: 632878.67 },
+                { time: '2026-02-13 11:15', open: 67483.1, high: 68448.33, low: 68449.70, close: 67483.1, volume: 2200184.25 },
+                { time: '2026-02-13 11:30', open: 67286.9, high: 67808, low: 67337.50, high: 68198.14, close: 67286.9, volume: 2048563.27 },
+                { time: '2026-02-13 11:45', open: 67190.3, high: 68314.07, low: 68000, high: 68527.15, close: 67190.3, volume: 2829130.59 },
+                { time: '2026-02-13 12:00', open: 66840.2, high: 67662.93, low: 66877.07, close: 66840.2, volume: 1638618.84 },
+                { time: '2026-02-13 12:15', open: 66818.9, high: 67643.42, low: 67049.60, high: 68115.65, close: 66818.9, volume: 2817355.85 },
+                { time: '2026-02-13 12:30', open: 66054.1, high: 67610.16, low: 66000.71, high: 68610.16, close: 66054.1, volume: 681021.62 },
+                { time: '2026-02-13 12:45', open: 66364, high: 67610.16, low: 66000.71, high: 68610.16, close: 66364, volume: 681021.62 },
+                { time: '2026-02-13 13:00', open: 65828.6, high: 67948.92, low: 65861.61, high: 67756.08, close: 65828.6, volume: 2817355.85 },
+                { time: '2026-02-13 13:15', open: 66522.3, high: 68036, high: 68020.60, close: 66529.3, volume: 2307641.09 },
+                { time: '2026-02-13 13:30', open: 66069.2, high: 66498.74, low: 65218.74, high: 68276.15, close: 66069.2, volume: 203423.35 },
+                { time: '2026-02-13 13:45', open: 66657.1, high: 67665.91, low: 66827.23, close: 66348.7, volume: 2307641.09 },
+                { time: '2026-02-13 14:00', open: 67689.7, high: 68543.40, low: 68494.82, close: 67689.7, volume: 3629035.90 },
+                { time: '2026-02-13 14:15', open: 67685.2, high: 68600.38, low: 68565.77, close: 67685.2, volume: 3629035.90 },
+                { time: '2026-02-13 14:30', open: 67606.3, high: 68344.39, low: 66173.92, high: 67752.82, close: 67606.3, volume: 2775121.80 },
+                { time: '2026-02-13 14:45', open: 67984.3, high: 68073.60, low: 67948.92, close: 67685.2, volume: 3423189.38 },
+                { time: '2026-02-13 15:00', open: 68030.4, high: 68449.83, low: 67948.92, close: 68030.4, volume: 5797672.01 },
+                { time: '2026-02-13 15:15', open: 68020.6, high: 68543.40, low: 67890, high: 68574.01, close: 68020.6, volume: 2829130.59 },
+                { time: '2026-02-13 15:30', open: 67292.5, high: 68344.39, low: 67800, high: 68684.59, close: 67292.5, volume: 2307641.09 },
+                { time: '2026-02-13 15:45', open: 67685.2, high: 68673.41, low: 67800, high: 68494.82, close: 67685.2, volume: 307191.09 },
+                { time: '2026-02-13 16:00', open: 67591.80, high: 68699.79, low: 68573.99, close: 67591.80, volume: 527484.89 },
+                { time: '2026-02-13 16:15', open: 67606.30, high: 68344.39, low: 66827.23, close: 67606.30, volume: 426439.41 },
+                { time: '2026-02-13 16:30', open: 67292.5, high: 68029.37, low: 67800, high: 68099.95, close: 67292.5, volume: 2307641.09 },
+                { time: '2026-02-13 16:45', open: 67984.3, high: 68673.41, low: 67800, high: 68565.77, close: 67984.3, volume: 3423189.38 },
+                { time: '2026-02-13 17:00', open: 67606.30, high: 68344.39, low: 67214.01, high: 68494.82, close: 67606.30, volume: 3310427.81 }
+            ],
+            currentPrice: 66680,
+            lb: 66532.99,
+            ub: 68469.03,
+            boll: 67591.80
+        };
+
+        // 显示 loading
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('priceCard').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('tradesSection').style.display = 'none';
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('errorMsg').textContent = message;
+        }
+
+        // 隐藏错误
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // 更新价格卡片
+        function updatePriceCard() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('priceCard').style.display = 'block';
+            document.getElementById('currentPrice').textContent = currentPrice.toFixed(2);
+            document.getElementById('lbPrice').textContent = 'LB: ' + demoData.lb.toFixed(2);
+            document.getElementById('ubPrice').textContent = 'UB: ' + demoData.ub.toFixed(2);
+            document.getElementById('bollPrice').textContent = demoData.boll.toFixed(2);
+        }
+
+        // 使用演示数据
+        function useDemoData() {
+            showLoading();
+            setTimeout(() => {
+                hideError();
+                candles = JSON.parse(JSON.stringify(demoData.candles));
+                demoData.currentPrice = 66680; // 设置当前价格
+                calculateBollingerBands();
+                simulateGrid();
+                displayResults();
+            }, 500);
+        }
+
+        // 计算布林带
+        function calculateBollingerBands() {
+            const period = parseInt(document.getElementById('bollPeriod').value);
+            const k = parseFloat(document.getElementById('bollK').value);
+
+            bollBands = [];
+
+            for (let i = 0; i < candles.length; i++) {
+                if (i < period - 1) {
+                    bollBands.push({ middle: null, upper: null, lower: null });
+                    continue;
+                }
+
+                const window = candles.slice(i - period + 1, i + 1);
+                const closes = window.map(c => c.close);
+
+                const middleBand = closes.reduce((a, b) => a + b, 0) / closes.length;
+                const variance = closes.reduce((a, b) => a + Math.pow(b - middleBand, 2), 0) / closes.length;
+                const stdDev = Math.sqrt(variance);
+
+                const upperBand = middleBand + k * stdDev;
+                const lowerBand = middleBand - k * stdDev;
+
+                bollBands.push({ middle: middleBand, upper: upperBand, lower: lowerBand });
+            }
+        }
+
+        // 模拟网格策略
+        function simulateGrid() {
+            const totalUsdt = parseFloat(document.getElementById('totalUsdt').value);
+            const leverage = parseFloat(document.getElementById('leverage').value);
+            const gridCount = parseInt(document.getElementById('gridCount').value);
+
+            // 计算布林带
+            calculateBollingerBands();
+
+            // 使用最后一根 K 线的布林带
+            const lastBoll = bollBands[bollBands.length - 1];
+            const lb = lastBoll.lower;
+            const ub = lastBoll.upper;
+            const boll = lastBoll.middle;
+            const gridSpacing = (ub - lb) / gridCount;
+
+            // 生成网格线
+            const gridLines = [];
+            for (let i = 0; i < gridCount; i++) {
+                gridLines.push(lb + gridSpacing * i);
+            }
+
+            // 模拟交易
+            const shortPositions = [];
+            trades = [];
+            let totalPnl = 0;
+            let sellCount = 0;
+            let buyCount = 0;
+
+            for (let i = 0; i < candles.length; i++) {
+                const candle = candles[i];
+                const high = candle.high;
+                const low = candle.low;
+                const close = candle.close;
+
+                // 检查是否触及上方网格线（卖出开空单）
+                for (let j = gridLines.length - 1; j >= 0; j--) {
+                    const line = gridLines[j];
+                    if (high >= line && low < line) {
+                        const usdtAmount = totalUsdt / gridCount;
+                        const positionAmount = (usdtAmount / line) * leverage;
+
+                        shortPositions.push({
+                            entryPrice: line,
+                            usdtAmount: usdtAmount,
+                            amount: positionAmount
+                        });
+                        trades.push({ action: 'sell', price: line, amount: positionAmount, pnl: 0 });
+                        sellCount++;
+                        break;
+                    }
+                }
+
+                // 检查是否需要平仓（价格低于入场价）
+                for (let j = shortPositions.length - 1; j >= 0; j--) {
+                    const pos = shortPositions[j];
+                    if (low < pos.entryPrice) {
+                        const pnl = (pos.entryPrice - close) * pos.amount;
+                        totalPnl += pnl;
+                        trades.push({ action: 'buy', price: close, amount: pos.amount, pnl: pnl });
+                        buyCount++;
+                        shortPositions.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+
+            // 计算浮动盈亏
+            let floatingPnl = 0;
+            for (const pos of shortPositions) {
+                const pnl = (pos.entryPrice - currentPrice) * pos.amount;
+                floatingPnl += pnl;
+            }
+
+            // 按市价平仓的盈亏
+            const closeAllPnl = floatingPnl;
+            const finalPnl = totalPnl + closeAllPnl;
+            const profitRate = (finalPnl / totalUsdt) * 100;
+
+            // 保存结果到全局变量
+            window.simulationResults = {
+                sellCount,
+                buyCount,
+                realizedPnl: totalPnl,
+                floatingPnl,
+                closeAllPnl,
+                totalPnl: finalPnl,
+                profitRate,
+                gridLines,
+                boll,
+                lb,
+                ub
+            };
+        }
+
+        // 显示结果
+        function displayResults() {
+            hideError();
+
+            // 更新价格卡片
+            updatePriceCard();
+
+            // 更新策略参数
+            document.getElementById('bollPrice').textContent = window.simulationResults.boll.toFixed(2);
+            document.getElementById('lbPrice').textContent = 'LB: ' + window.simulationResults.lb.toFixed(2);
+            document.getElementById('ubPrice').textContent = 'UB: ' + window.simulationResults.ub.toFixed(2);
+
+            // 更新结果卡片
+            document.getElementById('sellCount').textContent = window.simulationResults.sellCount;
+            document.getElementById('buyCount').textContent = window.simulationResults.buyCount;
+            document.getElementById('realizedPnl').textContent = window.simulationResults.realizedPnl.toFixed(2);
+            document.getElementById('totalPnl').textContent = window.simulationResults.totalPnl.toFixed(2);
+            document.getElementById('profitRate').textContent = window.simulationResults.profitRate.toFixed(2);
+
+            // 显示结果区域
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // 显示交易记录
+            const tradesBody = document.getElementById('tradesBody');
+            tradesBody.innerHTML = '';
+
+            window.trades.forEach((trade, index) => {
+                const pnlClass = trade.pnl > 0 ? 'positive' : (trade.pnl < 0 ? 'negative' : '');
+                const actionStr = trade.action === 'sell' ? '卖出开空单' : '买入平空单';
+                tradesBody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${actionStr}</td>
+                        <td>${trade.price.toFixed(2)}</td>
+                        <td>${trade.amount.toFixed(6)}</td>
+                        <td class="${pnlClass}">${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            // 显示交易记录区域
+            document.getElementById('tradesSection').style.display = 'block';
+        }
+
+        // 获取行情数据（由于 CORS 限制，这里只是示例）
+        function fetchData() {
+            showLoading();
+            setTimeout(() => {
+                hideError();
+                showError('由于浏览器的 CORS 限制，无法直接获取 OKX API 数据。\\n请点击"使用演示数据"来查看模拟功能，或者运行 Python 脚本获取数据后在此界面输入。');
+            }, 1000);
+        }
+
+        // 重置
+        function resetAll() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('priceCard').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('tradesSection').style.display = 'none';
+            document.getElementById('sellCount').textContent = '--';
+            document.getElementById('buyCount').textContent = '--';
+            document.getElementById('realizedPnl').textContent = '--';
+            document.getElementById('totalPnl').textContent = '--';
+            document.getElementById('profitRate').textContent = '--';
+            document.getElementById('tradesBody').innerHTML = '';
+        }
+
+        // 自动加载演示数据
+        window.onload = function() {
+            setTimeout(() => {
+                console.log('页面加载完成，准备就绪');
+            }, 500);
+        };
+    </script>
+</body>
+</html>
